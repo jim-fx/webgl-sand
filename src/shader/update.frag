@@ -20,8 +20,6 @@ float modI(float a,float b) {
     return floor(m+0.5);
 }
 
-const float leftRightChance = 0.5;
-
 void main() {
 
   float pixelWidth = 1.0 / dimension.x;
@@ -31,21 +29,15 @@ void main() {
 
   vec4 col = texture2D(tex, pos);
 
-
-  bool  isOnFloor = pos.y - pixelHeight < 0.0;
-  bool  isTopRow = pos.y + pixelHeight >= 1.0;
-
-
+  bool isOnFloor = pos.y - pixelHeight <= 0.0;
+  bool isTopRow = pos.y + pixelHeight*2.0 >= 1.0;
 
   if (length(col) == 0.0) {
-    float xScale = 20000.0;
-    float yScale = 20000.0;
-    float seedStrength = 200.0;
-    float r = snoise2(vec2(pos.x*xScale+seed.x*xScale, pos.y*yScale+seed.y*yScale)) > 0.0 ? 1.0:0.0;
-    r = 0.0;
-    col = vec4(r, snoise2(pos+200.0*seed.y)/2.0+0.5, snoise2(pos+400.0*seed.z)/2.0+0.5, 1.0);
+    col = vec4(0.0, snoise2(pos+20.0*seed.y)/2.0+0.5, snoise2(pos+40.0*seed.z)/2.0+0.5, 1.0);
+    float xScale = 2.0;
+    float yScale = 20.0;
+    col.r = 0.11+snoise2(vec2(pos.x*xScale+seed.x*xScale, pos.y*yScale+seed.y*yScale))/2.0+0.5;
   } else {
-
 
     float rng = random(pos);
     vec2  cap  =                vec2(pos.x,              pos.y + pixelHeight); 
@@ -58,28 +50,83 @@ void main() {
     vec4  cb   = texture2D(tex, cbp);
     vec4  cbr  = texture2D(tex, vec2(pos.x - pixelWidth, pos.y - pixelHeight));
     vec4  cbl  = texture2D(tex, vec2(pos.x + pixelWidth, pos.y - pixelHeight));
-    vec4  cbl2  = texture2D(tex, vec2(pos.x, pos.y - pixelHeight*2.0));
     float rngb = random(cbp);
 
 
-    float m = modI(pos.y*dimension.y, 2.00001+snoise2(vec2(pos.x*100.0, time))*0.2);
-    float t = modI(time*2000.0, 2.0001);
+    float m = modI(pos.y*dimension.y, 2.001+random(pos));
+    float t = modI(time*2000.0, 2.001);
     if(t > 0.1){
       m = 1.0 -m;
     }
 
     if(m > 0.0002){
-      if(cb.r < 0.1){
+     if (cb.r < 0.1) {
         col.r = 0.0;
+      }else if(rng > 0.5){
+        if (rnga > 0.5){
+          if(cbl.r < 0.1){
+            col.r = 0.0;
+          }
+        }else{
+          if(cbr.r < 0.1){
+            col.r = 0.0;
+          }
+        }
       }
-    }else{
-      if(ca.r > 0.1){
-        col.r = 1.0;
+    }else if(col.r < 0.1){
+     if (ca.r > 0.1) {
+        col.r = ca.r;
+      }else {
+        if(rngb > 0.5){
+          if(cal.r > 0.1){
+            col.r = cal.r;
+          }
+        }else{
+          if(car.r > 0.1){
+            col.r = car.r;
+          }
+        }
       }
     }
 
-      
+    if(isTopRow){
+      col.r = 0.0;
+    }else if(isOnFloor){
+      col.r = ca.r;
+    }
 
+  }
+
+  if(col.r < 0.1){
+    float sum = 0.0;
+    for(int x = -1; x < 1; x++){
+      for(int y = -1; y < 1; y++){
+        if(x+y != 0){
+
+        float fx = float(x);
+        float fy = float(y);
+        vec4 c = texture2D(tex, vec2(vPos.x+pixelWidth*fx, vPos.y+pixelHeight*fy));
+        sum += c.r;
+        }
+      }
+    }
+    if(sum > 0.1){
+      col.r = sum / 8.0;
+    }
+  }
+
+  if(col.r < 0.2){
+    col.r = 0.0;
+  }else if(col.r < 0.4){
+    col.r = 0.2;
+  }else if(col.r < 0.6){
+    col.r = 0.4;
+  }else if(col.r < 0.8){
+    col.r = 0.6;
+  }else if(col.r < 1.0){
+    col.r = 0.8;
+  }else{
+    col.r = 1.0;
   }
 
 

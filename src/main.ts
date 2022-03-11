@@ -6,7 +6,7 @@ import createUpdateProgram from "./shader/update";
 
 const canvas = document.createElement("canvas");
 
-const scale = 0.2;
+const scale = 0.5;
 const width = Math.floor(window.innerWidth * scale);
 const height = Math.floor(window.innerHeight * scale);
 
@@ -81,7 +81,7 @@ function readTexture() {
 
     const { x: mx, y: my, singlePixel } = shouldReadTexture;
 
-    let removePixels = pixels[xyToIndex(mx, my) * 4] > 100;
+    let removePixels = pixels[xyToIndex(mx, my) * 4] > 1;
 
     const paintSize = Math.floor(width * 0.1);
 
@@ -154,13 +154,17 @@ function draw() {
   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
 }
 
+let cancelRender = false;
 function render(time: number) {
   update(time);
   swapBuffers();
-
+  update(time + 1);
+  swapBuffers();
   draw();
 
-  requestAnimationFrame(render);
+  if (!cancelRender) {
+    requestAnimationFrame(render);
+  }
 }
 // setInterval(render, 50);
 
@@ -172,6 +176,10 @@ window.addEventListener("click", ({ x, y, ctrlKey }) => {
     x: Math.floor((x / window.innerWidth) * width),
     y: Math.floor((1 - y / window.innerHeight) * height),
   };
+
+  setTimeout(() => {
+    // cancelRender = true;
+  }, 2000);
 
   //   shouldReadTexture = {
   //     x,
