@@ -6,7 +6,7 @@ import createUpdateProgram from "./shader/update";
 
 const canvas = document.createElement("canvas");
 
-const scale = 1;
+const scale = 0.2;
 const width = Math.floor(window.innerWidth * scale);
 const height = Math.floor(window.innerHeight * scale);
 
@@ -83,7 +83,7 @@ function readTexture() {
 
     let removePixels = pixels[xyToIndex(mx, my) * 4] > 100;
 
-    const paintSize = Math.floor(width * 0.01);
+    const paintSize = Math.floor(width * 0.1);
 
     if (singlePixel) {
       pixels[xyToIndex(mx, my) * 4] = removePixels ? 0 : 255;
@@ -156,9 +156,9 @@ function draw() {
 
 function render(time: number) {
   update(time);
+  swapBuffers();
 
   draw();
-  swapBuffers();
 
   requestAnimationFrame(render);
 }
