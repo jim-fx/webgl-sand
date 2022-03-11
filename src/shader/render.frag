@@ -7,5 +7,5 @@ uniform vec2 dimension;
 
 void main(){
   vec4 col = texture2D(tex, vPos);
-  gl_FragColor = vec4(col.r,0.0,0.0,1.0);
+  gl_FragColor = vec4(col.r,0.0,col.b,1.0);
 }
