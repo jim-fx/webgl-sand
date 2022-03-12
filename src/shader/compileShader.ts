@@ -27,6 +27,12 @@ export default function (
   );
   if (!compiledFragment) {
     // Something went wrong during compilation; get the error
+    console.log(
+      frag
+        .split("\n")
+        .map((l, i) => `${i}: ${l}`)
+        .join("\n")
+    );
     console.error(gl.getShaderInfoLog(fragmentShader));
   }
 

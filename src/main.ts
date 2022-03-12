@@ -6,7 +6,7 @@ import createUpdateProgram from "./shader/update";
 
 const canvas = document.createElement("canvas");
 
-const scale = 0.5;
+const scale = 0.4;
 const width = Math.floor(window.innerWidth * scale);
 const height = Math.floor(window.innerHeight * scale);
 
@@ -44,6 +44,7 @@ const dimLocU = gl.getUniformLocation(updateProgram, "dimension");
 gl.uniform2fv(dimLocU, [width, height]);
 
 const timeLoc = gl.getUniformLocation(updateProgram, "time");
+const alternateLoc = gl.getUniformLocation(updateProgram, "alternate");
 
 const seedLoc = gl.getUniformLocation(updateProgram, "seed");
 gl.uniform4f(
@@ -73,7 +74,6 @@ function fastDistance([x1, y1, x2, y2]: [number, number, number, number]) {
 
 function readTexture() {
   if (!shouldReadTexture) return;
-  console.log({ width, height, shouldReadTexture });
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
     var sTextureSize = width * height * 4; // r, g, b, a
     var pixels = new Uint8Array(sTextureSize);
@@ -125,19 +125,40 @@ function readTexture() {
   shouldReadTexture = undefined;
 }
 
+function countPixels() {
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
+    var sTextureSize = width * height * 4; // r, g, b, a
+    var pixels = new Uint8Array(sTextureSize);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+    let total = 0;
+    for (var i = 0; i < sTextureSize; i += 4) {
+      total += pixels[i] > 1 ? 1 : 0;
+    }
+
+    console.log(total);
+  }
+}
+
 function swapBuffers() {
   const _a = fbA;
   fbA = fbB;
   fbB = _a;
 }
 
+let alternate = false;
+
 function update(time: number) {
+  alternate = !alternate;
+
   gl.useProgram(updateProgram);
+
+  gl.uniform1f(alternateLoc, alternate ? 1 : 0);
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbA.fb);
   gl.activeTexture(gl.TEXTURE0 + 0);
   gl.bindTexture(gl.TEXTURE_2D, fbB.tex);
-  gl.uniform1f(timeLoc, time / 100000);
+  gl.uniform1f(timeLoc, time);
   gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
 
   if (shouldReadTexture) readTexture();
@@ -158,15 +179,23 @@ let cancelRender = false;
 function render(time: number) {
   update(time);
   swapBuffers();
-  update(time + 1);
-  swapBuffers();
+
   draw();
+
+  countPixels();
 
   if (!cancelRender) {
     requestAnimationFrame(render);
   }
 }
-// setInterval(render, 50);
+
+function pauseResume() {
+  cancelRender = !cancelRender;
+  if (cancelRender == false) {
+    render(0);
+  }
+}
+// setInterval(() => render(performance.now()), 500);
 
 render(0);
 
@@ -185,4 +214,10 @@ window.addEventListener("click", ({ x, y, ctrlKey }) => {
   //     x,
   //     y,
   //   };
+});
+
+window.addEventListener("keydown", ({ key }) => {
+  if (key === " ") {
+    pauseResume();
+  }
 });
